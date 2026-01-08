@@ -3,7 +3,7 @@ import { computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { exams } from '../data'
 import { calculateResult } from '../utils/scoring'
-import { saveResult } from '../utils/storage'
+import { saveResult, updateLastResult } from '../utils/storage'
 import QuestionCard from '../components/QuestionCard.vue'
 
 const route = useRoute()
@@ -18,6 +18,7 @@ const currentIndex = computed(() => {
 })
 
 const storageKey = computed(() => `quiz-answers-${route.params.examId}`)
+const savedKey = computed(() => `quiz-saved-${route.params.examId}`)
 
 function getStoredAnswers(): Record<number, number> {
   const data = sessionStorage.getItem(storageKey.value)
@@ -49,8 +50,13 @@ function selectAnswer(answer: number) {
 
   if (isLastQuestion.value) {
     const result = calculateResult(exam.value, answers)
-    saveResult(result)
-    sessionStorage.removeItem(storageKey.value)
+    const alreadySaved = sessionStorage.getItem(savedKey.value)
+    if (alreadySaved) {
+      updateLastResult(result)
+    } else {
+      saveResult(result)
+      sessionStorage.setItem(savedKey.value, '1')
+    }
     router.push({ name: 'results', params: { examId: exam.value.id } })
   } else {
     router.push({
@@ -60,9 +66,11 @@ function selectAnswer(answer: number) {
   }
 }
 
-// Redirect to question 1 if no question specified
+// Redirect to question 1 if no question specified, and clear session state for fresh start
 watch(() => route.params, (params) => {
   if (params.examId && !params.question) {
+    sessionStorage.removeItem(storageKey.value)
+    sessionStorage.removeItem(savedKey.value)
     router.replace({
       name: 'quiz',
       params: { examId: params.examId, question: '1' }

@@ -17,3 +17,17 @@ export function getResults(): ExamResult[] {
 export function getResultsByExam(examId: string): ExamResult[] {
   return getResults().filter(r => r.examId === examId)
 }
+
+export function updateLastResult(result: ExamResult): void {
+  const results = getResults()
+  for (let i = results.length - 1; i >= 0; i--) {
+    const existing = results[i]
+    if (existing && existing.examId === result.examId) {
+      results[i] = result
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(results))
+      return
+    }
+  }
+  results.push(result)
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(results))
+}
