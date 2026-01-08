@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { exams } from '../data'
 import { calculateResult } from '../utils/scoring'
@@ -10,34 +10,65 @@ const route = useRoute()
 const router = useRouter()
 
 const exam = computed(() => exams.find(e => e.id === route.params.examId))
-const currentIndex = ref(0)
-const answers = ref<Record<number, number>>({})
+const currentIndex = computed(() => {
+  const q = route.params.question
+  if (!q || Array.isArray(q)) return 0
+  const parsed = parseInt(q, 10)
+  return isNaN(parsed) ? 0 : parsed - 1
+})
+
+const storageKey = computed(() => `quiz-answers-${route.params.examId}`)
+
+function getStoredAnswers(): Record<number, number> {
+  const data = sessionStorage.getItem(storageKey.value)
+  if (!data) return {}
+  return JSON.parse(data)
+}
+
+function storeAnswers(answers: Record<number, number>) {
+  sessionStorage.setItem(storageKey.value, JSON.stringify(answers))
+}
 
 const currentQuestion = computed(() => exam.value?.questions[currentIndex.value])
 const isLastQuestion = computed(() =>
   exam.value ? currentIndex.value === exam.value.questions.length - 1 : false
 )
-const hasAnswer = computed(() =>
-  currentQuestion.value ? answers.value[currentQuestion.value.id] !== undefined : false
-)
+
+const selectedAnswer = computed(() => {
+  if (!currentQuestion.value) return null
+  const answers = getStoredAnswers()
+  return answers[currentQuestion.value.id] ?? null
+})
 
 function selectAnswer(answer: number) {
-  if (currentQuestion.value) {
-    answers.value[currentQuestion.value.id] = answer
-  }
-}
+  if (!currentQuestion.value || !exam.value) return
 
-function next() {
-  if (!hasAnswer.value || !exam.value) return
+  const answers = getStoredAnswers()
+  answers[currentQuestion.value.id] = answer
+  storeAnswers(answers)
 
   if (isLastQuestion.value) {
-    const result = calculateResult(exam.value, answers.value)
+    const result = calculateResult(exam.value, answers)
     saveResult(result)
+    sessionStorage.removeItem(storageKey.value)
     router.push({ name: 'results', params: { examId: exam.value.id } })
   } else {
-    currentIndex.value++
+    router.push({
+      name: 'quiz',
+      params: { examId: exam.value.id, question: String(currentIndex.value + 2) }
+    })
   }
 }
+
+// Redirect to question 1 if no question specified
+watch(() => route.params, (params) => {
+  if (params.examId && !params.question) {
+    router.replace({
+      name: 'quiz',
+      params: { examId: params.examId, question: '1' }
+    })
+  }
+}, { immediate: true })
 </script>
 
 <template>
@@ -47,17 +78,10 @@ function next() {
       :question="currentQuestion"
       :question-number="currentIndex + 1"
       :total-questions="exam.questions.length"
-      :selected-answer="answers[currentQuestion.id] ?? null"
+      :selected-answer="selectedAnswer"
       :scale-max="exam.scaleMax"
       @select="selectAnswer"
     />
-    <button
-      class="next-btn"
-      :disabled="!hasAnswer"
-      @click="next"
-    >
-      {{ isLastQuestion ? 'Finish' : 'Next' }}
-    </button>
   </div>
   <div v-else>
     <p>Exam not found.</p>
@@ -71,25 +95,5 @@ function next() {
 
 h2 {
   margin-bottom: 2rem;
-}
-
-.next-btn {
-  margin-top: 2rem;
-  padding: 0.75rem 2rem;
-  font-size: 1rem;
-  border: none;
-  border-radius: 4px;
-  background: #333;
-  color: white;
-  cursor: pointer;
-}
-
-.next-btn:disabled {
-  background: #ccc;
-  cursor: not-allowed;
-}
-
-.next-btn:not(:disabled):hover {
-  background: #444;
 }
 </style>
