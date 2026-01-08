@@ -26,9 +26,15 @@ const latestResult = computed(() => {
           v-for="subscale in exam.subscales"
           :key="subscale.name"
           class="subscale"
+          :class="{ elevated: latestResult.subscaleElevated?.[subscale.name] }"
         >
           <span class="label">{{ subscale.name }}</span>
-          <span class="value">{{ latestResult.subscaleScores[subscale.name] }}</span>
+          <span class="value">
+            {{ latestResult.subscaleScores[subscale.name] }}
+            <template v-if="latestResult.subscalePercentHigh">
+              <span class="percent-high">({{ latestResult.subscalePercentHigh[subscale.name] }}% high)</span>
+            </template>
+          </span>
         </div>
       </div>
     </div>
@@ -45,6 +51,11 @@ const latestResult = computed(() => {
       Source: Frost, R. O., Marten, P., Lahart, C., &amp; Rosenblate, R. (1990).
       The dimensions of perfectionism.
       <em>Cognitive Therapy and Research, 14</em>(5), 449-468.
+    </p>
+    <p v-if="exam.id === 'ysqr'" class="citation">
+      Source: Yalcin, O., Marais, I., Lee, C., &amp; Correia, H. (2022).
+      Revisions to the Young Schema Questionnaire using Rasch analysis: the YSQ-R.
+      <em>Australian Psychologist, 57</em>, 8-20.
     </p>
   </div>
   <div v-else>
@@ -105,6 +116,18 @@ h2 {
 
 .subscale .value {
   font-weight: bold;
+}
+
+.subscale.elevated {
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+}
+
+.percent-high {
+  font-size: 0.75rem;
+  font-weight: normal;
+  color: #666;
+  margin-left: 0.5rem;
 }
 
 .actions {

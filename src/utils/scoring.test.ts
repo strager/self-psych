@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest'
-import { getAdjustedScore, calculateSubscaleScores, calculateTotalScore } from './scoring'
+import { getAdjustedScore, calculateSubscaleScores, calculateTotalScore, calculateSubscalePercentHigh, calculateElevatedStatus } from './scoring'
 import { psps } from '../data/psps'
 import { fmps } from '../data/fmps'
+import { ysqr } from '../data/ysqr'
 
 describe('getAdjustedScore', () => {
   describe('7-point scale (PSPS)', () => {
@@ -220,5 +221,152 @@ describe('calculateTotalScore', () => {
 
   it('returns 0 for empty scores', () => {
     expect(calculateTotalScore({})).toBe(0)
+  })
+})
+
+describe('YSQ-R (6-point scale, average scoring)', () => {
+  describe('calculateSubscaleScores with average scoring', () => {
+    it('calculates Emotional Deprivation average correctly', () => {
+      // Emotional Deprivation items: 1, 2, 3, 4, 5 (5 items)
+      const answers: Record<number, number> = {}
+      for (let i = 1; i <= 116; i++) {
+        answers[i] = 3
+      }
+      // Set Emotional Deprivation items to: 2, 3, 4, 5, 6 (sum=20, avg=4.0)
+      answers[1] = 2
+      answers[2] = 3
+      answers[3] = 4
+      answers[4] = 5
+      answers[5] = 6
+
+      const scores = calculateSubscaleScores(ysqr, answers)
+      expect(scores['Emotional Deprivation']).toBe(4)
+    })
+
+    it('calculates average with decimal places', () => {
+      const answers: Record<number, number> = {}
+      for (let i = 1; i <= 116; i++) {
+        answers[i] = 3
+      }
+      // Abandonment items: 6-13 (8 items)
+      // Set to: 1,2,3,4,5,6,1,2 (sum=24, avg=3.0)
+      answers[6] = 1
+      answers[7] = 2
+      answers[8] = 3
+      answers[9] = 4
+      answers[10] = 5
+      answers[11] = 6
+      answers[12] = 1
+      answers[13] = 2
+
+      const scores = calculateSubscaleScores(ysqr, answers)
+      expect(scores['Abandonment']).toBe(3)
+    })
+
+    it('handles all answers being 1 (minimum)', () => {
+      const answers: Record<number, number> = {}
+      for (let i = 1; i <= 116; i++) {
+        answers[i] = 1
+      }
+
+      const scores = calculateSubscaleScores(ysqr, answers)
+      expect(scores['Emotional Deprivation']).toBe(1)
+      expect(scores['Abandonment']).toBe(1)
+      expect(scores['Mistrust']).toBe(1)
+    })
+
+    it('handles all answers being 6 (maximum)', () => {
+      const answers: Record<number, number> = {}
+      for (let i = 1; i <= 116; i++) {
+        answers[i] = 6
+      }
+
+      const scores = calculateSubscaleScores(ysqr, answers)
+      expect(scores['Emotional Deprivation']).toBe(6)
+      expect(scores['Abandonment']).toBe(6)
+      expect(scores['Mistrust']).toBe(6)
+    })
+  })
+
+  describe('calculateSubscalePercentHigh', () => {
+    it('calculates 0% when no items are 5 or 6', () => {
+      const answers: Record<number, number> = {}
+      for (let i = 1; i <= 116; i++) {
+        answers[i] = 4
+      }
+
+      const percentHigh = calculateSubscalePercentHigh(ysqr, answers)
+      expect(percentHigh['Emotional Deprivation']).toBe(0)
+      expect(percentHigh['Abandonment']).toBe(0)
+    })
+
+    it('calculates 100% when all items are 5 or 6', () => {
+      const answers: Record<number, number> = {}
+      for (let i = 1; i <= 116; i++) {
+        answers[i] = 5
+      }
+
+      const percentHigh = calculateSubscalePercentHigh(ysqr, answers)
+      expect(percentHigh['Emotional Deprivation']).toBe(100)
+      expect(percentHigh['Abandonment']).toBe(100)
+    })
+
+    it('calculates 50% when half items are high', () => {
+      const answers: Record<number, number> = {}
+      for (let i = 1; i <= 116; i++) {
+        answers[i] = 3
+      }
+      // Abandonment items: 6-13 (8 items)
+      // Set 4 of them to high scores
+      answers[6] = 5
+      answers[7] = 6
+      answers[8] = 5
+      answers[9] = 6
+
+      const percentHigh = calculateSubscalePercentHigh(ysqr, answers)
+      expect(percentHigh['Abandonment']).toBe(50)
+    })
+
+    it('rounds percentage to nearest integer', () => {
+      const answers: Record<number, number> = {}
+      for (let i = 1; i <= 116; i++) {
+        answers[i] = 3
+      }
+      // Emotional Deprivation: 5 items
+      // Set 2 to high = 40%
+      answers[1] = 5
+      answers[2] = 6
+
+      const percentHigh = calculateSubscalePercentHigh(ysqr, answers)
+      expect(percentHigh['Emotional Deprivation']).toBe(40)
+    })
+  })
+
+  describe('calculateElevatedStatus', () => {
+    it('marks as elevated when percent >= 50', () => {
+      const percentHigh = {
+        'Emotional Deprivation': 50,
+        'Abandonment': 75,
+        'Mistrust': 100
+      }
+
+      const elevated = calculateElevatedStatus(percentHigh)
+      expect(elevated['Emotional Deprivation']).toBe(true)
+      expect(elevated['Abandonment']).toBe(true)
+      expect(elevated['Mistrust']).toBe(true)
+    })
+
+    it('marks as not elevated when percent < 50', () => {
+      const percentHigh = {
+        'Emotional Deprivation': 0,
+        'Abandonment': 25,
+        'Mistrust': 49
+      }
+
+      const elevated = calculateElevatedStatus(percentHigh)
+      expect(elevated['Emotional Deprivation']).toBe(false)
+      expect(elevated['Abandonment']).toBe(false)
+      expect(elevated['Mistrust']).toBe(false)
+    })
   })
 })

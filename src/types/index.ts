@@ -17,6 +17,7 @@ export interface Exam {
   reversedItems: number[]
   scaleMax: number
   excludeFromTotal?: string[]
+  scoringMethod?: 'sum' | 'average'
 }
 
 export interface ExamResult {
@@ -25,4 +26,6 @@ export interface ExamResult {
   answers: Record<number, number>
   subscaleScores: Record<string, number>
   totalScore: number
+  subscalePercentHigh?: Record<string, number>
+  subscaleElevated?: Record<string, boolean>
 }

@@ -14,6 +14,7 @@ import { exams } from '../data'
           <span class="question-count">{{ exam.questions.length }} questions</span>
           <span v-if="exam.id === 'psps'" class="citation">Hewitt et al., 2003</span>
           <span v-if="exam.id === 'fmps'" class="citation">Frost et al., 1990</span>
+          <span v-if="exam.id === 'ysqr'" class="citation">Yalcin et al., 2022</span>
         </RouterLink>
       </li>
     </ul>

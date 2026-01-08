@@ -63,9 +63,15 @@ function confirmDelete(originalIndex: number) {
               v-for="subscale in result.subscales"
               :key="subscale.name"
               class="subscale"
+              :class="{ elevated: result.subscaleElevated?.[subscale.name] }"
             >
               <span class="label">{{ subscale.name }}:</span>
-              <span class="value">{{ result.subscaleScores[subscale.name] }}</span>
+              <span class="value">
+                {{ result.subscaleScores[subscale.name] }}
+                <template v-if="result.subscalePercentHigh">
+                  ({{ result.subscalePercentHigh[subscale.name] }}%)
+                </template>
+              </span>
             </div>
           </div>
         </div>
@@ -166,5 +172,10 @@ h2 {
 
 .label {
   margin-right: 0.5rem;
+}
+
+.subscale.elevated {
+  color: #856404;
+  font-weight: 500;
 }
 </style>
