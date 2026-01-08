@@ -1,7 +1,7 @@
 import type { Exam, ExamResult } from '../types'
 
-export function getAdjustedScore(answer: number, reversed: boolean): number {
-  return reversed ? 8 - answer : answer
+export function getAdjustedScore(answer: number, reversed: boolean, scaleMax: number): number {
+  return reversed ? (scaleMax + 1) - answer : answer
 }
 
 export function calculateSubscaleScores(
@@ -17,7 +17,7 @@ export function calculateSubscaleScores(
       if (answer !== undefined) {
         const question = exam.questions.find(q => q.id === itemId)
         const reversed = question?.reversed ?? false
-        total += getAdjustedScore(answer, reversed)
+        total += getAdjustedScore(answer, reversed, exam.scaleMax)
       }
     }
     scores[subscale.name] = total
@@ -26,8 +26,14 @@ export function calculateSubscaleScores(
   return scores
 }
 
-export function calculateTotalScore(subscaleScores: Record<string, number>): number {
-  return Object.values(subscaleScores).reduce((sum, score) => sum + score, 0)
+export function calculateTotalScore(
+  subscaleScores: Record<string, number>,
+  excludeFromTotal?: string[]
+): number {
+  const excluded = new Set(excludeFromTotal ?? [])
+  return Object.entries(subscaleScores)
+    .filter(([name]) => !excluded.has(name))
+    .reduce((sum, [, score]) => sum + score, 0)
 }
 
 export function calculateResult(
@@ -35,7 +41,7 @@ export function calculateResult(
   answers: Record<number, number>
 ): ExamResult {
   const subscaleScores = calculateSubscaleScores(exam, answers)
-  const totalScore = calculateTotalScore(subscaleScores)
+  const totalScore = calculateTotalScore(subscaleScores, exam.excludeFromTotal)
 
   return {
     examId: exam.id,

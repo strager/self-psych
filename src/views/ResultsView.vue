@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
-import { exams } from '../data/psps'
+import { exams } from '../data'
 import { getResults } from '../utils/storage'
 
 const route = useRoute()
@@ -36,10 +36,15 @@ const latestResult = computed(() => {
       <RouterLink :to="`/quiz/${exam.id}`" class="btn">Take Again</RouterLink>
       <RouterLink to="/" class="btn secondary">Home</RouterLink>
     </div>
-    <p class="citation">
+    <p v-if="exam.id === 'psps'" class="citation">
       Source: Hewitt, P. L., Flett, G. L., Sherry, S. B., et al. (2003).
       The interpersonal expression of perfection: Perfectionistic self-presentation and psychological distress.
       <em>Journal of Personality and Social Psychology, 84</em>(6), 1303-1325.
+    </p>
+    <p v-if="exam.id === 'fmps'" class="citation">
+      Source: Frost, R. O., Marten, P., Lahart, C., &amp; Rosenblate, R. (1990).
+      The dimensions of perfectionism.
+      <em>Cognitive Therapy and Research, 14</em>(5), 449-468.
     </p>
   </div>
   <div v-else>

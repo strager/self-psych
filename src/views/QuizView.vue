@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { exams } from '../data/psps'
+import { exams } from '../data'
 import { calculateResult } from '../utils/scoring'
 import { saveResult } from '../utils/storage'
 import QuestionCard from '../components/QuestionCard.vue'
@@ -48,6 +48,7 @@ function next() {
       :question-number="currentIndex + 1"
       :total-questions="exam.questions.length"
       :selected-answer="answers[currentQuestion.id] ?? null"
+      :scale-max="exam.scaleMax"
       @select="selectAnswer"
     />
     <button

@@ -6,6 +6,7 @@ defineProps<{
   questionNumber: number
   totalQuestions: number
   selectedAnswer: number | null
+  scaleMax: number
 }>()
 
 const emit = defineEmits<{
@@ -26,7 +27,7 @@ const emit = defineEmits<{
       </div>
       <div class="scale-buttons">
         <button
-          v-for="n in 7"
+          v-for="n in scaleMax"
           :key="n"
           :class="{ selected: selectedAnswer === n }"
           @click="emit('select', n)"

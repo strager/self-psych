@@ -11,6 +11,7 @@ import type { Exam } from '../types'
 export const psps: Exam = {
   id: 'psps',
   name: 'Perfectionistic Self-Presentation Scale',
+  scaleMax: 7,
   reversedItems: [1, 11, 16, 18, 22],
   subscales: [
     {
@@ -56,5 +57,3 @@ export const psps: Exam = {
     { id: 27, text: 'I strive to look perfect to others', reversed: false }
   ]
 }
-
-export const exams: Exam[] = [psps]

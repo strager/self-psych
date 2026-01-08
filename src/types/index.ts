@@ -15,6 +15,8 @@ export interface Exam {
   questions: Question[]
   subscales: Subscale[]
   reversedItems: number[]
+  scaleMax: number
+  excludeFromTotal?: string[]
 }
 
 export interface ExamResult {

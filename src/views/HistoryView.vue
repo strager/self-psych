@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
-import { exams } from '../data/psps'
+import { exams } from '../data'
 import { getResults } from '../utils/storage'
 
 const results = computed(() => {
