@@ -69,6 +69,9 @@ const emit = defineEmits<{
 }
 
 .scale-buttons button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 3rem;
   height: 3rem;
   border: 2px solid #ccc;
