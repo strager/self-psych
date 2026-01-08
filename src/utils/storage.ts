@@ -31,3 +31,11 @@ export function updateLastResult(result: ExamResult): void {
   results.push(result)
   localStorage.setItem(STORAGE_KEY, JSON.stringify(results))
 }
+
+export function deleteResult(index: number): void {
+  const results = getResults()
+  if (index >= 0 && index < results.length) {
+    results.splice(index, 1)
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(results))
+  }
+}

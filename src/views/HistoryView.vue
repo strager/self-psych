@@ -1,25 +1,39 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { exams } from '../data'
-import { getResults } from '../utils/storage'
+import { getResults, deleteResult } from '../utils/storage'
 
-const results = computed(() => {
-  return getResults()
-    .map(result => {
+const resultCount = ref(0)
+
+function loadResults() {
+  const raw = getResults()
+  resultCount.value = raw.length
+  return raw
+    .map((result, index) => {
       const exam = exams.find(e => e.id === result.examId)
       return {
         ...result,
+        originalIndex: index,
         examName: exam?.name ?? result.examId,
         subscales: exam?.subscales ?? []
       }
     })
     .reverse()
-})
+}
+
+let results = ref(loadResults())
 
 function formatDate(isoString: string): string {
   const date = new Date(isoString)
   return date.toLocaleString()
+}
+
+function confirmDelete(originalIndex: number) {
+  if (confirm('Delete this result?')) {
+    deleteResult(originalIndex)
+    results.value = loadResults()
+  }
 }
 </script>
 
@@ -31,10 +45,13 @@ function formatDate(isoString: string): string {
       <RouterLink to="/" class="btn">Take an Assessment</RouterLink>
     </div>
     <ul v-else class="result-list">
-      <li v-for="(result, index) in results" :key="index" class="result-item">
+      <li v-for="result in results" :key="result.originalIndex" class="result-item">
         <div class="result-header">
-          <strong>{{ result.examName }}</strong>
-          <span class="date">{{ formatDate(result.completedAt) }}</span>
+          <div>
+            <strong>{{ result.examName }}</strong>
+            <span class="date">{{ formatDate(result.completedAt) }}</span>
+          </div>
+          <button class="delete-btn" @click="confirmDelete(result.originalIndex)">Delete</button>
         </div>
         <div class="result-scores">
           <div class="total">
@@ -96,15 +113,37 @@ h2 {
 .result-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 1rem;
   padding-bottom: 0.5rem;
   border-bottom: 1px solid #eee;
 }
 
+.result-header > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
 .date {
   font-size: 0.875rem;
   color: #666;
+}
+
+.delete-btn {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: white;
+  color: #666;
+  cursor: pointer;
+}
+
+.delete-btn:hover {
+  background: #fee;
+  border-color: #c66;
+  color: #c00;
 }
 
 .result-scores {
